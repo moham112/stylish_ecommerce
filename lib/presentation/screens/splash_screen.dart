@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (CacheHelper.read("access_token") != null) {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       } else {
-        Navigator.pushReplacementNamed(context, '/onBoarding');
+        Navigator.pushReplacementNamed(context, '/login');
       }
     });
   }
@@ -30,8 +30,8 @@ class _SplashScreenState extends State<SplashScreen> {
       listener: (context, state) {
         if (state is AuthenticatedState) {
           Navigator.pushReplacementNamed(context, '/mainScreen');
-        } else if (state is NotAuthenticatedState) {
-          Navigator.pushReplacementNamed(context, '/onBoarding');
+        } else if (state is AuthenticatedUnauthenticatedState) {
+          Navigator.pushReplacementNamed(context, '/login');
         }
       },
       child: Scaffold(

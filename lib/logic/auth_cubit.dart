@@ -5,56 +5,59 @@ import 'package:ecommerce/logic/auth_state.dart';
 import 'package:flutter/material.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(this.authWebService) : super(NotAuthenticatedState());
+  AuthCubit(this.authWebService, bool isCached)
+      : super(isCached
+            ? AuthenticatedState()
+            : AuthenticatedUnauthenticatedState());
 
   AuthWebService authWebService;
 
   void login(Map<String, dynamic> data) {
-    emit(NotAuthenticatedState());
+    emit(AuthenticatedWaitingState());
 
     authWebService.auth(data).then(
       (value) async {
-        await CacheHelper.create("access_token", value['access_token']);
-        await CacheHelper.create("refresh_token", value['refresh_token']);
-
+        _setAuthCached(value['access_token'], value['refresh_token']);
         emit(AuthenticatedState());
       },
     ).catchError(
       (error) {
-        emit(NotAuthenticatedState());
-        debugPrint(error.toString());
+        emit(AuthenticatedFailureState());
       },
     );
   }
 
   void register(Map<String, dynamic> data) {
-    emit(NotAuthenticatedState());
+    emit(AuthenticatedWaitingState());
+
     authWebService.register(data).then(
       (value) {
         authWebService.auth({
           "email": value['email'],
           "password": value['password'],
         }).then((value2) {
-          CacheHelper.create("access_token", value2['access_token']);
-          CacheHelper.create("refresh_token", value2['refresh_token']);
+          _setAuthCached(value2['access_token'], value2['refresh_token']);
+          emit(AuthenticatedState());
         }).catchError((error) {
-          emit(NotAuthenticatedState());
+          emit(AuthenticatedFailureState());
           debugPrint("ERR: ${error.toString()}");
         });
-        emit(AuthenticatedState());
       },
     ).catchError(
       (error) {
-        emit(NotAuthenticatedState());
+        emit(AuthenticatedFailureState());
         debugPrint("ERR: ${error.toString()}");
       },
     );
   }
 
-  void signOut() {
-    debugPrint("Taaped from emit");
-    // emit(AuthenticatedState());
-    emit(NotAuthenticatedState());
-    debugPrint(state.toString());
+  void signOut() async {
+    await CacheHelper.delete("access_token");
+    emit(AuthenticatedUnauthenticatedState());
+  }
+
+  void _setAuthCached(String access, String refresh) async {
+    await CacheHelper.create("access_token", access);
+    await CacheHelper.create("refresh_token", refresh);
   }
 }

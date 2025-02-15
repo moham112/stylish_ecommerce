@@ -177,7 +177,7 @@ class _OnBoardingState extends State<OnBoarding> {
   }
 
   void navigateToSignIn() {
-    Navigator.pushReplacementNamed(context, "/signIn");
+    Navigator.pushReplacementNamed(context, "/login");
   }
 }
 
